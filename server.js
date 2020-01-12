@@ -1,7 +1,8 @@
 const db = require("./mockedDb");
 const express = require("express");
-const app = express();
+const bcrypt = require("bcrypt-nodejs");
 
+const app = express();
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -16,29 +17,62 @@ app.get("/", (req, res) => {
 */
 
 app.post("/signin", (req, res) => {
-    // he mentioned something about performance issues with variable checking and looping
-    // keeping it for now
-    if (
-        req.body.email === db.users[0].email &&
-        req.body.password === db.users[0].password
-    ) {
-        res.json("success");
+    const { email, password } = req.body;
+
+    let currentUser = null;
+    // Find association
+    db.login.forEach(user => {
+        if (user.email === email) {
+            currentUser = user;
+        }
+    });
+
+    let loginSuccessful = false;
+    bcrypt.compare(password, currentUser.hash, (err, res) => {
+        loginSuccessful = res.valueOf();
+    });
+
+    if (loginSuccessful) {
+        res.json("Success");
     } else {
-        res.status(400).json(
-            `${req.body.email} =/= ${db.users[0].email} or ${req.body.password} =/= ${db.users[0].password}`
-        );
+        res.status(400).json("Wrong login and/or password");
     }
 });
 
+// OLD
+// app.post("/register", (req, res) => {
+//     const newUser = {
+//         id: db.users.length,
+//         ...req.body,
+//         entries: 0,
+//         joined: new Date()
+//     };
+
+//     db.users.push(newUser);
+//     res.json(db.users);
+// });
+
 app.post("/register", (req, res) => {
+    const { name, email, password } = req.body;
+
     const newUser = {
         id: db.users.length,
-        ...req.body,
+        name: name,
+        email: email,
         entries: 0,
         joined: new Date()
     };
 
     db.users.push(newUser);
+
+    bcrypt.hash(password, null, null, (err, hash) => {
+        db.login.push({
+            id: db.login.length,
+            hash: hash,
+            email: email
+        });
+    });
+
     res.json(db.users);
 });
 

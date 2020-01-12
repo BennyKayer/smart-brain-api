@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "statrt" : "nodemon server.js"
+    "statrt": "nodemon server.js"
   },
   "author": "Pawel Benkowski",
   "license": "ISC",
   "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
     "express": "^4.17.1"
   },
   "devDependencies": {
