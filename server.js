@@ -1,12 +1,14 @@
 const db = require("./mockedDb");
 const express = require("express");
 const bcrypt = require("bcrypt-nodejs");
+const cors = require("cors");
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.get("/", (req, res) => {
-    res.send("This is working");
+    res.send(db.users);
 });
 
 /*
@@ -16,7 +18,7 @@ app.get("/", (req, res) => {
 /image --> PUT --> user
 */
 
-app.post("/signin", (req, res) => {
+app.post("/signin", (req, response) => {
     const { email, password } = req.body;
 
     let currentUser = null;
@@ -26,17 +28,17 @@ app.post("/signin", (req, res) => {
             currentUser = user;
         }
     });
-
-    let loginSuccessful = false;
-    bcrypt.compare(password, currentUser.hash, (err, res) => {
-        loginSuccessful = res.valueOf();
-    });
-
-    if (loginSuccessful) {
-        res.json("Success");
-    } else {
-        res.status(400).json("Wrong login and/or password");
+    if (!currentUser) {
+        response.status(400).json("user not found");
     }
+
+    bcrypt.compare(password, currentUser.hash, (err, res) => {
+        if (res) {
+            response.json(currentUser);
+        } else {
+            response.status(400).json("No match sry");
+        }
+    });
 });
 
 // OLD
