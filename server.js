@@ -75,7 +75,8 @@ app.post("/register", (req, res) => {
         });
     });
 
-    res.json(db.users);
+    // res.json(db.users);
+    res.json(newUser);
 });
 
 app.get("/profile/:id", (req, res) => {
