@@ -15,6 +15,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Routes
+const register = require("./controllers/POST_REGISTER");
+const signin = require("./controllers/POST_SIGN_IN");
+
 /*
 /signin --> POST = success/fail
 /register --> POST = user
@@ -22,65 +26,11 @@ app.use(cors());
 /image --> PUT --> user
 */
 
-app.post("/signin", (req, res) => {
-    knex.select("email", "hash")
-        .where("email", "=", req.body.email)
-        .from("login")
-        .then(data => {
-            //console.log(data[0]);
-            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-            if (isValid) {
-                return knex
-                    .select("*")
-                    .from("users")
-                    .where("email", "=", req.body.email)
-                    .then(user => {
-                        res.json(user[0]);
-                    })
-                    .catch(err => {
-                        res.status(400).json("Unable to get user");
-                    });
-            } else {
-                res.status(400).json("Wrond Credentials");
-            }
-        })
-        .catch(err => {
-            res.status(400).json("Wrong Credentials");
-        });
-});
+app.post("/signin", (req, res) => signin.handleSignIn(req, res, bcrypt, knex));
 
-app.post("/register", (req, res) => {
-    const { name, email, password } = req.body;
-
-    const hash = bcrypt.hashSync(password);
-
-    // Transaction
-    knex.transaction(trx => {
-        trx.insert({
-            hash: hash,
-            email: email
-        })
-            .into("login")
-            .returning("email")
-            .then(logEmail => {
-                return trx("users")
-                    .returning("*")
-                    .insert({
-                        name: name,
-                        email: logEmail[0],
-                        joined: new Date()
-                    })
-                    .then(user => {
-                        // console.log(user[0]);
-                        res.json(user[0]);
-                    });
-            })
-            .then(trx.commit)
-            .catch(trx.rollback);
-    }).catch(error => {
-        res.status(400).json("User already exists");
-    });
-});
+app.post("/register", (req, res) =>
+    register.handleRegister(req, res, knex, bcrypt)
+);
 
 app.get("/profile/:id", (req, res) => {
     const id = parseInt(req.params.id, 10);
