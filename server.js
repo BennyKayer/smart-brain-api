@@ -1,4 +1,3 @@
-const db = require("./mockedDb");
 const express = require("express");
 const bcrypt = require("bcrypt-nodejs");
 const cors = require("cors");
@@ -12,20 +11,9 @@ const knex = require("knex")({
     }
 });
 
-//console.log(knex.select("*").from("users"));// promise
-knex.select("*")
-    .from("users")
-    .then(data => {
-        console.log(data);
-    });
-
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-app.get("/", (req, res) => {
-    res.send(db.users);
-});
 
 /*
 /signin --> POST = success/fail
@@ -34,106 +22,102 @@ app.get("/", (req, res) => {
 /image --> PUT --> user
 */
 
-app.post("/signin", (req, response) => {
-    const { email, password } = req.body;
-
-    let currentUser = null;
-    // Find association
-    db.login.forEach(user => {
-        if (user.email === email) {
-            currentUser = user;
-        }
-    });
-    if (!currentUser) {
-        response.status(400).json("user not found");
-    }
-
-    bcrypt.compare(password, currentUser.hash, (err, res) => {
-        if (res) {
-            response.json(currentUser);
-        } else {
-            response.status(400).json("No match sry");
-        }
-    });
+app.post("/signin", (req, res) => {
+    knex.select("email", "hash")
+        .where("email", "=", req.body.email)
+        .from("login")
+        .then(data => {
+            //console.log(data[0]);
+            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
+            if (isValid) {
+                return knex
+                    .select("*")
+                    .from("users")
+                    .where("email", "=", req.body.email)
+                    .then(user => {
+                        res.json(user[0]);
+                    })
+                    .catch(err => {
+                        res.status(400).json("Unable to get user");
+                    });
+            } else {
+                res.status(400).json("Wrond Credentials");
+            }
+        })
+        .catch(err => {
+            res.status(400).json("Wrong Credentials");
+        });
 });
-
-// OLD
-// app.post("/register", (req, res) => {
-//     const newUser = {
-//         id: db.users.length,
-//         ...req.body,
-//         entries: 0,
-//         joined: new Date()
-//     };
-
-//     db.users.push(newUser);
-//     res.json(db.users);
-// });
 
 app.post("/register", (req, res) => {
     const { name, email, password } = req.body;
 
-    // Without db version
-    // const newUser = {
-    //     id: db.users.length,
-    //     name: name,
-    //     email: email,
-    //     entries: 0,
-    //     joined: new Date()
-    // };
+    const hash = bcrypt.hashSync(password);
 
-    // db.users.push(newUser);
-
-    knex("users")
-        .insert({
-            name: name,
-            email: email,
-            joined: new Date()
-        })
-        .then(data => {
-            console.log(data);
-        });
-
-    bcrypt.hash(password, null, null, (err, hash) => {
-        db.login.push({
-            id: db.login.length,
+    // Transaction
+    knex.transaction(trx => {
+        trx.insert({
             hash: hash,
             email: email
-        });
+        })
+            .into("login")
+            .returning("email")
+            .then(logEmail => {
+                return trx("users")
+                    .returning("*")
+                    .insert({
+                        name: name,
+                        email: logEmail[0],
+                        joined: new Date()
+                    })
+                    .then(user => {
+                        // console.log(user[0]);
+                        res.json(user[0]);
+                    });
+            })
+            .then(trx.commit)
+            .catch(trx.rollback);
+    }).catch(error => {
+        res.status(400).json("User already exists");
     });
-
-    // Without db version
-    // res.json(db.users);
-    // res.json(newUser);
 });
 
 app.get("/profile/:id", (req, res) => {
     const id = parseInt(req.params.id, 10);
-    let found = false;
-    db.users.forEach(user => {
-        if (user.id === id) {
-            found = true;
-            return res.json(user);
-        }
-    });
-    if (!found) {
-        res.status(400).json("not found");
-    }
+    knex.select("*")
+        .from("users")
+        .where({
+            id: id
+        })
+        .then(user => {
+            // console.log(user[0]);
+            if (user.length) {
+                res.json(user[0]);
+            } else {
+                res.status(400).json("User not found");
+            }
+        });
 });
 
 app.put("/image", (req, res) => {
     const id = req.body.id;
-    let found = false;
-    db.users.forEach(user => {
-        if (user.id === id) {
-            found = true;
-            user.entries++;
-            return res.json(user.entries);
-        }
-    });
-    if (!found) {
-        res.status(400).json("not found");
-    }
+    knex("users")
+        .where("id", "=", id)
+        .increment("entries", 1)
+        .returning("entries")
+        .then(entries => {
+            // console.log(entries[0]);
+            if (entries.length) {
+                res.json(entries[0]);
+            } else {
+                res.status(400).json(
+                    "Can't update entries of non-existant user"
+                );
+            }
+        })
+        .catch(err => {
+            res.status(400).json("Unable to get entries");
+        });
 });
 
 app.listen(4200, () => {

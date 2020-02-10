@@ -1,22 +1,22 @@
 {
-  "name": "smart-brain-api",
-  "version": "1.0.0",
-  "description": "Backend of smart-brain",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "statrt": "nodemon server.js"
-  },
-  "author": "Pawel Benkowski",
-  "license": "ISC",
-  "dependencies": {
-    "bcrypt-nodejs": "0.0.3",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "knex": "^0.20.9",
-    "pg": "^7.18.1"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.2"
-  }
+    "name": "smart-brain-api",
+    "version": "1.0.0",
+    "description": "Backend of smart-brain",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "nodemon server.js"
+    },
+    "author": "Pawel Benkowski",
+    "license": "ISC",
+    "dependencies": {
+        "bcrypt-nodejs": "0.0.3",
+        "cors": "^2.8.5",
+        "express": "^4.17.1",
+        "knex": "^0.20.9",
+        "pg": "^7.18.1"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.2"
+    }
 }
