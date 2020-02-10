@@ -2,6 +2,22 @@ const db = require("./mockedDb");
 const express = require("express");
 const bcrypt = require("bcrypt-nodejs");
 const cors = require("cors");
+const knex = require("knex")({
+    client: "pg",
+    connection: {
+        host: "127.0.0.1",
+        user: "postgres",
+        password: "51184c6a",
+        database: "smart-brain"
+    }
+});
+
+//console.log(knex.select("*").from("users"));// promise
+knex.select("*")
+    .from("users")
+    .then(data => {
+        console.log(data);
+    });
 
 const app = express();
 app.use(express.json());
@@ -57,15 +73,26 @@ app.post("/signin", (req, response) => {
 app.post("/register", (req, res) => {
     const { name, email, password } = req.body;
 
-    const newUser = {
-        id: db.users.length,
-        name: name,
-        email: email,
-        entries: 0,
-        joined: new Date()
-    };
+    // Without db version
+    // const newUser = {
+    //     id: db.users.length,
+    //     name: name,
+    //     email: email,
+    //     entries: 0,
+    //     joined: new Date()
+    // };
 
-    db.users.push(newUser);
+    // db.users.push(newUser);
+
+    knex("users")
+        .insert({
+            name: name,
+            email: email,
+            joined: new Date()
+        })
+        .then(data => {
+            console.log(data);
+        });
 
     bcrypt.hash(password, null, null, (err, hash) => {
         db.login.push({
@@ -75,8 +102,9 @@ app.post("/register", (req, res) => {
         });
     });
 
+    // Without db version
     // res.json(db.users);
-    res.json(newUser);
+    // res.json(newUser);
 });
 
 app.get("/profile/:id", (req, res) => {
