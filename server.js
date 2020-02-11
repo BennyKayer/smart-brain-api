@@ -34,6 +34,7 @@ app.put("/image", (req, res) => {
 app.post("/imageurl", (req, res) => {
     image.handleApiCall(req, res);
 });
-app.listen(4200, () => {
+const port = process.env.NODE_ENV === "production" ? process.env.PORT : 4200;
+app.listen(port, () => {
     console.log("App is running");
 });
