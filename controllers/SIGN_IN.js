@@ -1,15 +1,20 @@
-const handleSignIn = (req, res, bcrypt, knex) => {
+const postSignIn = (req, res, bcrypt, knex) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json("Blank Fields");
+    }
+
     knex.select("email", "hash")
-        .where("email", "=", req.body.email)
+        .where("email", "=", email)
         .from("login")
         .then(data => {
             //console.log(data[0]);
-            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
+            const isValid = bcrypt.compareSync(password, data[0].hash);
             if (isValid) {
                 return knex
                     .select("*")
                     .from("users")
-                    .where("email", "=", req.body.email)
+                    .where("email", "=", email)
                     .then(user => {
                         res.json(user[0]);
                     })
@@ -26,5 +31,5 @@ const handleSignIn = (req, res, bcrypt, knex) => {
 };
 
 module.exports = {
-    handleSignIn: handleSignIn
+    postSignIn: postSignIn
 };

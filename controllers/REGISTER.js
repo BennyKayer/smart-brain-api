@@ -1,5 +1,8 @@
-const handleRegister = (req, res, knex, bcrypt) => {
+const postRegister = (req, res, knex, bcrypt) => {
     const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+        return res.status(400).json("Blank Fields");
+    }
 
     const hash = bcrypt.hashSync(password);
 
@@ -32,5 +35,5 @@ const handleRegister = (req, res, knex, bcrypt) => {
 };
 
 module.exports = {
-    handleRegister: handleRegister
+    postRegister: postRegister
 };

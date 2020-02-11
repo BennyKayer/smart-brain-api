@@ -16,60 +16,24 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
-const register = require("./controllers/POST_REGISTER");
-const signin = require("./controllers/POST_SIGN_IN");
+const register = require("./controllers/REGISTER");
+const signin = require("./controllers/SIGN_IN");
+const profile = require("./controllers/PROFILE");
+const image = require("./controllers/IMAGE");
 
-/*
-/signin --> POST = success/fail
-/register --> POST = user
-/profile/:userId --> GET = user
-/image --> PUT --> user
-*/
-
-app.post("/signin", (req, res) => signin.handleSignIn(req, res, bcrypt, knex));
-
+app.post("/signin", (req, res) => signin.postSignIn(req, res, bcrypt, knex));
 app.post("/register", (req, res) =>
-    register.handleRegister(req, res, knex, bcrypt)
+    register.postRegister(req, res, knex, bcrypt)
 );
-
 app.get("/profile/:id", (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    knex.select("*")
-        .from("users")
-        .where({
-            id: id
-        })
-        .then(user => {
-            // console.log(user[0]);
-            if (user.length) {
-                res.json(user[0]);
-            } else {
-                res.status(400).json("User not found");
-            }
-        });
+    profile.getProfile(req, res, knex);
 });
-
 app.put("/image", (req, res) => {
-    const id = req.body.id;
-    knex("users")
-        .where("id", "=", id)
-        .increment("entries", 1)
-        .returning("entries")
-        .then(entries => {
-            // console.log(entries[0]);
-            if (entries.length) {
-                res.json(entries[0]);
-            } else {
-                res.status(400).json(
-                    "Can't update entries of non-existant user"
-                );
-            }
-        })
-        .catch(err => {
-            res.status(400).json("Unable to get entries");
-        });
+    image.putImage(req, res, knex);
 });
-
+app.post("/imageurl", (req, res) => {
+    image.handleApiCall(req, res);
+});
 app.listen(4200, () => {
     console.log("App is running");
 });
