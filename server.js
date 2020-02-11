@@ -22,7 +22,7 @@ const profile = require("./controllers/PROFILE");
 const image = require("./controllers/IMAGE");
 
 app.get("/", (req, res) => {
-    res.send(db.users);
+    res.send("Working");
 });
 app.post("/signin", (req, res) => signin.postSignIn(req, res, bcrypt, knex));
 app.post("/register", (req, res) =>
