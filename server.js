@@ -21,6 +21,9 @@ const signin = require("./controllers/SIGN_IN");
 const profile = require("./controllers/PROFILE");
 const image = require("./controllers/IMAGE");
 
+app.get("/", (req, res) => {
+    res.send(db.users);
+});
 app.post("/signin", (req, res) => signin.postSignIn(req, res, bcrypt, knex));
 app.post("/register", (req, res) =>
     register.postRegister(req, res, knex, bcrypt)
