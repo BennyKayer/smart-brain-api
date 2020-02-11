@@ -106,3 +106,14 @@
 // app.get("/", (req, res) => {
 //     res.send(db.users);
 // });
+
+// Local connection
+// const knex = require("knex")({
+//     client: "pg",
+//     connection: {
+//         host: "127.0.0.1",
+//         user: "postgres",
+//         password: "51184c6a",
+//         database: "smart-brain"
+//     }
+// });
